@@ -15,6 +15,7 @@ A collection of custom, handcrafted [Pixlet / Starlark](https://github.com/tidby
 | `petbyt` | **PetByt** | Virtual animated pixel desktop pet that idles and celebrates |
 | `pokebyt` | **PokeByt** | Random Pokémon sprite, stats, and Pokédex info display |
 | `serverbyt` | **ServerByt** | Home server health monitor (CPU, memory, disk, temps) |
+| `thanksgivingbyt` | **ThanksgivingByt** | Thanksgiving / Kentucky trip countdown with animated turkey mascot, pilgrim hat & native feather motif |
 | `tropicbyt` | **TropicByt** | Animated tropical pirate beach scene with palm trees, waves, and ships |
 | `vestabyt` | **VestaByt** | Vesta board and smart home tracker |
 | `worldcupbyt` | **WorldCupByt** | FIFA World Cup live match tracker, fixtures, and group standings |
