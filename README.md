@@ -14,6 +14,7 @@ A collection of custom, handcrafted [Pixlet / Starlark](https://github.com/tidby
 | `independencebyt` | **IndependenceByt** | 4th of July celebration with fireworks and historic scenes |
 | `mlbstandingsbyt` | **MLBStandingsByt** | Live Major League Baseball division standings and wild card races |
 | `petbyt` | **PetByt** | Virtual animated pixel desktop pet that idles and celebrates |
+| `poopbyt` | **PoopByt** | Silly poop buddy's bathroom day: potty, teeth, bubble bath, plunger concert, and flush |
 | `pokebyt` | **PokeByt** | Random Pokémon sprite, stats, and Pokédex info display |
 | `serverbyt` | **ServerByt** | Home server health monitor (CPU, memory, disk, temps) |
 | `thanksgivingbyt` | **ThanksgivingByt** | Thanksgiving / Kentucky trip countdown with animated turkey mascot, pilgrim hat & native feather motif |
