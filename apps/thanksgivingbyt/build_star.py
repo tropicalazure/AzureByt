@@ -53,6 +53,10 @@ ASSETS = {{
     "none": ANIM_NONE,
 }}
 
+# The turkey scene owns x=0..25; the countdown panel starts after a 1px gap.
+PANEL_X = 27
+PANEL_W = 64 - PANEL_X
+
 def parse_target(target_str, tz):
     # Safe validation before parse_time: YYYY-MM-DD (10 chars with hyphens)
     if len(target_str) == 10 and target_str[4] == "-" and target_str[7] == "-":
@@ -67,8 +71,8 @@ def main(config):
     target = parse_target(target_str, tz)
 
     destination = (config.get("destination") or "KENTUCKY").strip().upper()
-    if len(destination) > 10:
-        destination = destination[:10]
+    if len(destination) > 20:
+        destination = destination[:20]
 
     hat_style = config.get("hat_style", "both")
     turkey_asset = ASSETS.get(hat_style, ANIM_BOTH)
@@ -106,10 +110,10 @@ def main(config):
             cross_align = "center",
             children = [
                 render.Text("TRIP", font = "tb-8", color = "#ff9800"),
-                render.Text("DAY!", font = "tb-8", color = "#ffcc80"),
+                render.Text("DAY!", font = "tom-thumb", color = "#ffcc80"),
             ],
         )
-        badge_text = "WE'RE IN KY!"
+        badge_text = "ARRIVED!"
     elif diff_hours <= 24:
         # Final 24 hours countdown
         hrs = int(diff_hours)
@@ -151,22 +155,28 @@ def main(config):
         badge_text = target.format("Jan 02").upper()
 
     return render.Root(
-        delay = 180,
+        delay = 120,
         child = render.Stack(
             children = [
                 # Background animated turkey, foliage, and ribbon
                 render.Image(src = turkey_asset, width = 64, height = 32),
 
-                # Right column for countdown information
+                # Right column for countdown information. It sits between the
+                # bead ribbon (y=0) and the soil strip (y=29..31) baked into
+                # the art, so the text and the turkey share one scene.
                 render.Padding(
-                    pad = (27, 2, 1, 1),
+                    pad = (PANEL_X, 2, 0, 3),
                     child = render.Column(
                         expanded = True,
                         main_align = "space_between",
                         cross_align = "center",
                         children = [
-                            # Top destination / trip title
-                            render.Text(header_text, font = "tom-thumb", color = "#ffcc80"),
+                            # Top destination / trip title; scrolls when too long
+                            render.Marquee(
+                                width = PANEL_W,
+                                align = "center",
+                                child = render.Text(header_text, font = "tom-thumb", color = "#ffcc80"),
+                            ),
 
                             # Center countdown / milestone display
                             center_widget,
@@ -174,9 +184,10 @@ def main(config):
                             # Bottom date / status badge
                             render.Box(
                                 color = "#8d2b0b",
+                                width = PANEL_W,
                                 height = 7,
                                 child = render.Padding(
-                                    pad = (3, 1, 3, 1),
+                                    pad = (0, 1, 0, 0),
                                     child = render.Text(badge_text, font = "tom-thumb", color = "#ffe0b2"),
                                 ),
                             ),

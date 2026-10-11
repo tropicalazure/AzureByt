@@ -7,9 +7,14 @@ Creates 8-frame seamless animated WebP loops for:
 - 'pilgrim': Pilgrim hat with gold buckle
 - 'feather': Native American feather headband
 - 'none': Classic heritage wild turkey
+
+Layout: the turkey scene owns x=0..25; x=27..63 is left empty for the
+countdown text drawn by the .star file. A beaded ribbon (y=0) and the soil
+strip (y=29..31) span the full width so both halves read as one scene.
 """
 
 import base64
+import math
 import os
 from PIL import Image
 
@@ -18,191 +23,218 @@ FRAME_COUNT = 8
 FRAME_MS = 180
 
 # ── Color Palette ─────────────────────────────────────────────────────────────
-BG_NIGHT     = (18, 12, 26, 255)
+BG_NIGHT     = (18, 12, 26)
 TURQUOISE    = (26, 188, 156)
 RUST_RED     = (198, 40, 40)
 DARK_RED     = (142, 20, 20)
 GOLD         = (245, 176, 65)
 AMBER        = (235, 130, 40)
+CREAM        = (255, 224, 178)
 CHESTNUT     = (109, 76, 65)
 DARK_BROWN   = (62, 39, 35)
+DEEP_BROWN   = (44, 27, 24)
 LIGHT_BROWN  = (141, 110, 99)
 BEAK_YELLOW  = (255, 202, 40)
 FEET_ORANGE  = (245, 124, 0)
 WHITE        = (248, 248, 248)
 BLACK        = (24, 24, 24)
-HAT_BLACK    = (20, 20, 20)
-HAT_SHINE    = (55, 55, 55)
+HAT_BLACK    = (28, 26, 30)
+HAT_SHINE    = (70, 68, 76)
 PUMPKIN_ORG  = (230, 81, 0)
+PUMPKIN_DK   = (180, 60, 0)
 PUMPKIN_LT   = (255, 140, 0)
 STEM_GREEN   = (46, 125, 50)
 LEAF_RED     = (211, 47, 47)
 LEAF_GOLD    = (255, 193, 7)
 LEAF_ORANGE  = (239, 108, 0)
 
-SOIL_1       = (45, 28, 20)
-SOIL_2       = (32, 20, 14)
-SOIL_3       = (22, 14, 10)
+SOIL_1       = (58, 36, 24)
+SOIL_2       = (40, 25, 17)
+SOIL_3       = (26, 16, 11)
+
+GROUND_Y = 29  # first soil row; feet stand on y=28
+
+# Tail feathers alternate colors across the fan, left to right.
+FEATHER_COLORS = [RUST_RED, AMBER, GOLD, RUST_RED, AMBER, GOLD, AMBER, RUST_RED]
+
+# Hand-drawn sprites: '.' is transparent.
+SPRITE_PALETTE = {
+    "C": CHESTNUT, "D": DARK_BROWN, "E": DEEP_BROWN, "L": LIGHT_BROWN,
+    "G": GOLD, "R": RUST_RED, "d": DARK_RED, "W": WHITE, "K": BLACK,
+    "Y": BEAK_YELLOW, "y": GOLD, "O": FEET_ORANGE,
+    "H": HAT_BLACK, "h": HAT_SHINE, "b": DARK_BROWN, "g": GOLD,
+    "T": TURQUOISE, "c": CREAM,
+}
+
+# Body + wing, anchored at (3, 16).
+BODY = [
+    "....DDDDDDDD.....",
+    "..DDCCCCCCCCDD...",
+    ".DCCLLLLCCCCCCD..",
+    "DCCLcLLLLLCCCCCD.",
+    "DCLLLGLLLLLCCCCD.",
+    "DCLLLLLGLLLLCCCD.",
+    "DCCLLLLLLLLCCCCD.",
+    ".DCCLLLLLLCCCCD..",
+    "..DCCCCCCCCCCD...",
+    "....DDDDDDDD.....",
+]
+
+# Neck + head facing right, anchored at (13, 7). Eye pixel is 'K'.
+HEAD = [
+    "..dRRR...",
+    ".dRRRRR..",
+    ".dRWKRRYY",
+    ".dRRRRRy.",
+    "..dRRRd..",
+    "..dRRd...",
+    "..dRR....",
+    ".dRRR....",
+    ".dRRR....",
+    "dRRR.....",
+]
+
+PILGRIM_HAT = [  # anchored at (13, 2): crown on the head, brim at y=6
+    "..HHHH..",
+    "..HhHH..",
+    "..HhHH..",
+    "..bgbb..",
+    "HHHHHHH.",
+]
+
+LEGS = [  # anchored at (7, 26)
+    "..O....O...",
+    "..O....O...",
+    ".OOO..OOO..",
+]
+
+PUMPKIN = [  # anchored at (19, 24)
+    "...TT.",
+    ".DOOOD",
+    "OOLOOO",
+    "OOLOOO",
+    ".OOOO.",
+]
+PUMPKIN_PALETTE = {"T": STEM_GREEN, "O": PUMPKIN_ORG, "D": PUMPKIN_DK, "L": PUMPKIN_LT}
+
+
+def blit(im, sprite, ox, oy, palette=SPRITE_PALETTE):
+    for y, row in enumerate(sprite):
+        for x, ch in enumerate(row):
+            if ch == ".":
+                continue
+            px, py = ox + x, oy + y
+            if 0 <= px < 64 and 0 <= py < 32:
+                im.putpixel((px, py), palette[ch])
+
+
+def blit_outline(im, sprite, ox, oy, color=DEEP_BROWN):
+    """Paint a 1px silhouette ring so a sprite separates from what is behind it."""
+    for y, row in enumerate(sprite):
+        for x, ch in enumerate(row):
+            if ch == ".":
+                continue
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                px, py = ox + nx, oy + ny
+                if 0 <= px < 64 and 2 <= py < GROUND_Y and im.getpixel((px, py)) != BG_NIGHT:
+                    im.putpixel((px, py), color)
+
+
+def draw_fan(im, lift):
+    """Fanned tail: alternating colored feathers with rounded tips and a dark core."""
+    cx, cy = 10.5, 18.0 - lift
+    outer = 12.5
+    n = len(FEATHER_COLORS)
+    for y in range(2, 22):
+        for x in range(0, 24):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            if dy > 0.5:
+                continue
+            r = math.hypot(dx, dy)
+            ang = math.atan2(-dy, dx)  # 0 = right, pi = left
+            ang = min(max(ang, 0.0), math.pi)
+            idx = min(int((math.pi - ang) / math.pi * n), n - 1)
+            # Position within the feather wedge, 0 at seam .. 1 at center.
+            frac = ((math.pi - ang) / math.pi * n) % 1.0
+            edge = 1.0 - abs(frac - 0.5) * 2
+            tip = outer - 1.6 * (1 - edge) ** 2
+            if r > tip:
+                continue
+            if r < 4.0:
+                col = DEEP_BROWN
+            elif r < 5.5:
+                col = DARK_BROWN
+            elif r > tip - 1.3:
+                col = CREAM if FEATHER_COLORS[idx] == GOLD else GOLD
+            elif r > tip - 2.3:
+                col = DARK_BROWN  # dark band below the light tip
+            else:
+                col = FEATHER_COLORS[idx]
+            im.putpixel((x, y), col)
+
 
 def draw_frame(frame_idx, hat_style="both"):
-    im = Image.new("RGBA", (64, 32), BG_NIGHT)
-    
-    # 1. Native American top ribbon pattern above turkey (x=0..26, y=0..1)
-    ribbon = [TURQUOISE, RUST_RED, GOLD, WHITE, GOLD, RUST_RED, TURQUOISE, (18, 12, 26)]
-    for x in range(27):
-        im.putpixel((x, 0), ribbon[x % len(ribbon)])
-        if (x % len(ribbon)) in (1, 2, 3, 4, 5):
-            im.putpixel((x, 1), ribbon[(x + 4) % len(ribbon)])
+    im = Image.new("RGB", (64, 32), BG_NIGHT)
 
-    # 2. Autumn soil & grass line (y=28..31)
+    # 1. Beaded ribbon across the full top edge.
+    beads = [TURQUOISE, RUST_RED, GOLD, CREAM, GOLD, RUST_RED, TURQUOISE, BG_NIGHT]
     for x in range(64):
-        im.putpixel((x, 28), SOIL_1)
-        im.putpixel((x, 29), SOIL_2)
-        im.putpixel((x, 30), SOIL_3)
-        im.putpixel((x, 31), (15, 10, 7))
+        im.putpixel((x, 0), beads[x % len(beads)])
 
-    # Ground foliage & leaves
-    im.putpixel((5, 28), LEAF_GOLD)
-    im.putpixel((18, 28), LEAF_RED)
-    im.putpixel((32, 28), (55, 80, 35))
-    im.putpixel((49, 28), LEAF_ORANGE)
+    # 2. Soil strip across the full width.
+    for x in range(64):
+        im.putpixel((x, GROUND_Y), SOIL_1)
+        im.putpixel((x, GROUND_Y + 1), SOIL_2)
+        im.putpixel((x, GROUND_Y + 2), SOIL_3)
+    for lx, col in ((1, LEAF_GOLD), (25, LEAF_RED), (40, LEAF_ORANGE), (57, LEAF_GOLD)):
+        im.putpixel((lx, GROUND_Y), col)
 
-    # 3. Falling autumn leaves in the background (x=28..63)
-    leaf_drifts = [
-        (25 + (frame_idx * 2) % 6, 3 + (frame_idx * 3) % 22, LEAF_GOLD),
-        (28 + (frame_idx * 1) % 4, 10 + (frame_idx * 3) % 15, LEAF_RED),
-        (61 + (frame_idx * 1) % 2, 8 + (frame_idx * 2) % 16, LEAF_ORANGE),
-    ]
-    for lx, ly, col in leaf_drifts:
-        if 27 <= lx < 63 and 2 <= ly < 28:
-            im.putpixel((lx, ly), col)
-            if ly + 1 < 28:
-                im.putpixel((lx + 1, ly), col)
+    # 3. Leaves drifting down behind the turkey (seamless 8-frame loop).
+    for x0, y0, sway, col in ((2, 3, 0, LEAF_GOLD), (22, 13, 4, LEAF_ORANGE)):
+        ly = 2 + (y0 + frame_idx * 3) % 24
+        lx = x0 + (1 if (frame_idx + sway) % 8 < 4 else 0)
+        im.putpixel((lx, ly), col)
 
-    # 4. Turkey Bob / Breathing Animation
-    breathe = 1 if frame_idx in (1, 2, 5, 6) else 0
+    # 4. Breathing: tail and body lift together; head bobs on its own beat.
+    lift = 1 if frame_idx in (2, 3, 4, 5) else 0
+    bob = 1 if frame_idx in (3, 4) else 0
 
-    # 5. Tail plumage (fanned out behind the body)
-    fan_gold = [
-        (2, 14), (3, 12), (4, 10), (6, 8), (8, 7), (10, 7), (12, 7), (14, 8), (16, 10), (17, 12), (18, 14)
-    ]
-    for fx, fy in fan_gold:
-        im.putpixel((fx, fy - breathe), GOLD)
+    draw_fan(im, lift)
+    blit(im, LEGS, 7, 26)
+    blit(im, BODY, 3, 16 - lift)
+    blit_outline(im, HEAD, 13 + bob, 7 - lift)
+    blit(im, HEAD, 13 + bob, 7 - lift)
 
-    fan_amber = [
-        (3, 14), (4, 12), (5, 11), (5, 10), (7, 9), (9, 8), (11, 8), (13, 9), (15, 10), (15, 11), (16, 12), (17, 14)
-    ]
-    for fx, fy in fan_amber:
-        im.putpixel((fx, fy - breathe), AMBER)
+    # Blink on frame 6.
+    if frame_idx == 6:
+        im.putpixel((13 + bob + 4, 9 - lift), RUST_RED)
 
-    fan_rust = [
-        (4, 14), (5, 13), (6, 12), (6, 11), (8, 10), (10, 9), (12, 10), (14, 11), (14, 12), (15, 13), (16, 14)
-    ]
-    for fx, fy in fan_rust:
-        im.putpixel((fx, fy - breathe), RUST_RED)
+    # Wattle wobble.
+    wob = 1 if frame_idx in (1, 2, 5, 6) else 0
+    im.putpixel((13 + bob + 6 + wob, 13 - lift), DARK_RED)
 
-    # Dark base of tail
-    for fy in range(12, 17):
-        for fx in range(5, 16):
-            dx = (fx - 10) / 5.5
-            dy = (fy - 18) / 6.0
-            if dx*dx + dy*dy <= 1.0 and im.getpixel((fx, fy - breathe)) == BG_NIGHT:
-                im.putpixel((fx, fy - breathe), DARK_BROWN)
-
-    # 6. Turkey Plump Body
-    for fy in range(16, 26):
-        for fx in range(7, 19):
-            dx = (fx - 13) / 5.0
-            dy = (fy - 21) / 4.5
-            if dx*dx + dy*dy <= 1.0:
-                im.putpixel((fx, fy), CHESTNUT)
-
-    # Wing plumage
-    for fy in range(18, 24):
-        for fx in range(8, 14):
-            dx = (fx - 11) / 2.8
-            dy = (fy - 21) / 2.5
-            if dx*dx + dy*dy <= 0.8:
-                im.putpixel((fx, fy), LIGHT_BROWN)
-    im.putpixel((10, 20), GOLD)
-    im.putpixel((11, 21), GOLD)
-
-    # 7. Neck & Breast
-    for fy in range(14, 20):
-        for fx in range(16, 20):
-            im.putpixel((fx, fy), RUST_RED)
-
-    # 8. Head
-    for fy in range(10, 14):
-        for fx in range(17, 22):
-            im.putpixel((fx, fy), RUST_RED)
-
-    # Eye: blinks on frame 6
-    im.putpixel((19, 11), WHITE)
-    im.putpixel((20, 11), BLACK if frame_idx != 6 else RUST_RED)
-
-    # Beak: golden yellow
-    im.putpixel((22, 11), BEAK_YELLOW)
-    im.putpixel((23, 11), BEAK_YELLOW)
-    im.putpixel((24, 11), GOLD)
-    im.putpixel((22, 12), GOLD)
-
-    # Snood / Wattle: wobbles!
-    wobble = 1 if frame_idx in (2, 3, 6, 7) else 0
-    im.putpixel((22, 13), DARK_RED)
-    im.putpixel((22 + wobble, 14), RUST_RED)
-    im.putpixel((21 + wobble, 15), DARK_RED)
-
-    # 9. Hats / Accessories
+    # 5. Hats / accessories (move with the head).
+    hx, hy = 13 + bob, 7 - lift
     if hat_style in ("both", "pilgrim"):
-        for fx in range(15, 23):
-            im.putpixel((fx, 9), HAT_BLACK)
-        for fy in range(5, 9):
-            for fx in range(16, 22):
-                im.putpixel((fx, fy), HAT_BLACK)
-        im.putpixel((17, 6), HAT_SHINE)
-        im.putpixel((17, 7), HAT_SHINE)
-        for fx in range(16, 22):
-            im.putpixel((fx, 8), DARK_BROWN)
-        im.putpixel((19, 8), GOLD)
-        im.putpixel((19, 7), GOLD)
-
+        blit(im, PILGRIM_HAT, hx, hy - 5)
     if hat_style in ("both", "feather"):
-        if hat_style == "both":
-            im.putpixel((15, 8), TURQUOISE)
-            im.putpixel((14, 7), RUST_RED)
-            im.putpixel((14, 6), WHITE)
-            im.putpixel((13, 5), WHITE)
-            im.putpixel((13, 4), BLACK)
+        if hat_style == "feather":
+            for i, fx in enumerate(range(hx + 1, hx + 7)):
+                im.putpixel((fx, hy + 1), TURQUOISE if i % 2 == 0 else GOLD)
+            fx, top = hx + 2, hy - 3
         else:
-            for fx in range(17, 22):
-                im.putpixel((fx, 10), TURQUOISE if fx % 2 == 0 else RUST_RED)
-            im.putpixel((18, 9), GOLD)
-            im.putpixel((18, 8), WHITE)
-            im.putpixel((18, 7), WHITE)
-            im.putpixel((18, 6), BLACK)
+            # Tucked into the hat band, behind the crown.
+            fx, top = hx + 1, hy - 6
+        im.putpixel((fx, top), BLACK)
+        im.putpixel((fx, top + 1), WHITE)
+        im.putpixel((fx, top + 2), WHITE)
+        im.putpixel((fx, top + 3), RUST_RED)
 
-    # 10. Turkey Feet
-    im.putpixel((11, 25), FEET_ORANGE)
-    im.putpixel((11, 26), FEET_ORANGE)
-    im.putpixel((10, 27), FEET_ORANGE)
-    im.putpixel((11, 27), FEET_ORANGE)
-    im.putpixel((12, 27), FEET_ORANGE)
-
-    im.putpixel((15, 25), FEET_ORANGE)
-    im.putpixel((15, 26), FEET_ORANGE)
-    im.putpixel((14, 27), FEET_ORANGE)
-    im.putpixel((15, 27), FEET_ORANGE)
-    im.putpixel((16, 27), FEET_ORANGE)
-
-    # 11. Harvest Pumpkin near turkey
-    im.putpixel((25, 24), STEM_GREEN)
-    for py in range(25, 28):
-        for px in range(23, 27):
-            im.putpixel((px, py), PUMPKIN_ORG)
-    im.putpixel((24, 26), PUMPKIN_LT)
+    # 6. Harvest pumpkin at the turkey's feet.
+    blit(im, PUMPKIN, 19, 24, PUMPKIN_PALETTE)
 
     return im
+
 
 def build_all():
     styles = ["both", "pilgrim", "feather", "none"]
