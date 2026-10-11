@@ -7,6 +7,7 @@ A collection of custom, handcrafted [Pixlet / Starlark](https://github.com/tidby
 | App ID | Name | Description |
 | :--- | :--- | :--- |
 | `america250byt` | **America250Byt** | Semiquincentennial celebration animation with fireworks & official logo |
+| `bunnybyt` | **BunnyByt** | Golden sparkly bunny hopping on a sunny beach, drawn in JavaScript |
 | `clockbyt` | **ClockByt** | Seamless retro animated clock with flip and digital styling |
 | `dolphinbyt` | **DolphinByt** | Smooth pixel-art animated scene of dolphins swimming through the ocean |
 | `hauntbyt` | **HauntByt** | Spooky animated haunted house with ghosts, bats, lightning, and pumpkins |
