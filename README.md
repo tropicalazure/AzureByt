@@ -8,7 +8,6 @@ A collection of custom, handcrafted [Pixlet / Starlark](https://github.com/tidby
 | :--- | :--- | :--- |
 | `america250byt` | **America250Byt** | Semiquincentennial celebration animation with fireworks & official logo |
 | `clockbyt` | **ClockByt** | Seamless retro animated clock with flip and digital styling |
-| `deepbyt` | **DeepByt** | Live reasoning status, tokens, and AI insights from DeepSeek |
 | `dolphinbyt` | **DolphinByt** | Smooth pixel-art animated scene of dolphins swimming through the ocean |
 | `hauntbyt` | **HauntByt** | Spooky animated haunted house with ghosts, bats, lightning, and pumpkins |
 | `independencebyt` | **IndependenceByt** | 4th of July celebration with fireworks and historic scenes |
