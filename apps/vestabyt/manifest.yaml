@@ -1,0 +1,7 @@
+id: vestabyt
+name: VestaByt
+summary: Vesta board & smart home tracker
+desc: Smart home monitor and message board display for your home lab.
+author: marka
+fileName: vestabyt.star
+packageName: vestabyt

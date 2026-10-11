@@ -1,0 +1,8 @@
+id: yankeebyt
+name: YankeeByt
+summary: New York Yankees live game tracker
+desc: Live scores, game status, count, bases, and box scores for New York Yankees
+  baseball.
+author: marka
+fileName: yankees2.star
+packageName: yankeebyt

@@ -1,0 +1,8 @@
+id: clockbyt
+name: ClockByt
+summary: Animated retro flip/digital clock
+desc: An animated retro clock for your Tidbyt with smooth looping animations, pixel
+  art style, and clean typography.
+author: marka
+fileName: clockbyt.star
+packageName: clockbyt

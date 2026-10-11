@@ -1,0 +1,7 @@
+id: mlbstandingsbyt
+name: MLBStandingsByt
+summary: Major League Baseball standings
+desc: Live MLB division standings, records, and wild card races updated regularly.
+author: marka
+fileName: mlb_standings.star
+packageName: mlbstandingsbyt

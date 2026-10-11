@@ -1,0 +1,8 @@
+id: worldcupbyt
+name: WorldCupByt
+summary: FIFA World Cup match tracker
+desc: Live scores, match schedules, group standings, and tournament brackets for the
+  FIFA World Cup.
+author: marka
+fileName: worldcup.star
+packageName: worldcupbyt

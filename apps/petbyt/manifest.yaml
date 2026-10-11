@@ -1,0 +1,8 @@
+id: petbyt
+name: PetByt
+summary: Virtual pixel art desktop pet
+desc: An adorable animated pixel-art pet that idles, plays, and celebrates on your
+  Tidbyt.
+author: marka
+fileName: petbyt.star
+packageName: petbyt

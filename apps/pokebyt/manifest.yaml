@@ -1,0 +1,8 @@
+id: pokebyt
+name: PokeByt
+summary: "Random Pok\xE9mon sprite and stats display"
+desc: "Displays random Pok\xE9mon sprites, stats, types, and Pok\xE9dex entries on\
+  \ your Tidbyt."
+author: marka
+fileName: PokeByt.star
+packageName: pokebyt

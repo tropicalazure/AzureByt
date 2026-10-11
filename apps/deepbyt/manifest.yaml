@@ -1,0 +1,7 @@
+id: deepbyt
+name: DeepByt
+summary: DeepSeek AI metrics and reasoning display
+desc: Displays live status, tokens, and AI insights from DeepSeek on your Tidbyt.
+author: marka
+fileName: deepseek.star
+packageName: deepbyt

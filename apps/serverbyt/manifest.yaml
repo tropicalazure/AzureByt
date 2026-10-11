@@ -1,0 +1,7 @@
+id: serverbyt
+name: ServerByt
+summary: Home server health at a glance
+desc: "Shows live CPU, memory, disk, and temperature health for the Acer laptop running this Tronbyt server. A color-coded mood orb and per-metric readout stay calm and green when everything's fine, and call out exactly what needs attention when it's not."
+author: marka
+fileName: serverbyt.star
+packageName: serverbyt
