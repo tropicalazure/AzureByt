@@ -1,0 +1,8 @@
+id: snowbyt
+name: SnowByt
+summary: Snowstorm cozy cottage
+desc: A swirling snowstorm over a warmly lit log cottage, drawn entirely in JavaScript.
+  Chimney smoke, flickering firelight, wind gusts, and three layers of drifting snow.
+author: marka
+fileName: snowbyt.star
+packageName: snowbyt
