@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dream metadata. No settingsActivity: the screensaver has nothing to
+     configure, and Google TV wouldn't surface a settings screen anyway. -->
+<dream xmlns:android="http://schemas.android.com/apk/res/android" />

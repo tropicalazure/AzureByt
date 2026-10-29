@@ -16,3 +16,8 @@ Thumbs.db
 .idea/
 .vscode/
 .claude/
+
+# Android TV build outputs
+*.apk
+*.apk.idsig
+apps/*/androidtv/.agents/
